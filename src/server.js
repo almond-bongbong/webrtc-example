@@ -1,6 +1,6 @@
 import express from 'express';
 import http from 'http';
-import { WebSocket } from 'ws';
+import WebSocket from 'ws';
 
 const app = express();
 
@@ -12,5 +12,11 @@ app.get('/*', (req, res) => res.redirect('/'));
 
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
+
+function handleConnection(socket) {
+  console.log(socket);
+}
+
+wss.on('connection', handleConnection);
 
 server.listen(3000, () => console.log('🚀 Server started on :3000'));
