@@ -13,15 +13,18 @@ app.get('/*', (req, res) => res.redirect('/'));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const sockets = [];
+
 wss.on('connection', (socket) => {
   console.log('Connected to Browser ✅');
+  sockets.push(socket);
 
   socket.on('close', () => console.log('Disconnected from Browser ❌'));
   socket.on('message', (message) => {
-    console.log(message.toString());
+    sockets.forEach((s) => {
+      s.send(message.toString());
+    });
   });
-
-  socket.send('hello!!');
 });
 
 server.listen(3000, () => console.log('🚀 Server started on :3000'));
