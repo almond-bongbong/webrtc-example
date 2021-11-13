@@ -28,7 +28,7 @@ setTimeout(() => {
 messageForm.addEventListener('submit', (e) => {
   e.preventDefault();
   const input = messageForm.querySelector('input');
-  socket.send(makeMessage('message', input.value));
+  socket.send(makeMessage('new_message', input.value));
   input.value = '';
 });
 
