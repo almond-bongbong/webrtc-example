@@ -15,15 +15,25 @@ const wss = new WebSocket.Server({ server });
 
 const sockets = [];
 
-wss.on('connection test', (socket) => {
+wss.on('connection', (socket) => {
   console.log('Connected to Browser ✅');
   sockets.push(socket);
 
   socket.on('close', () => console.log('Disconnected from Browser ❌'));
   socket.on('message', (message) => {
-    sockets.forEach((s) => {
-      s.send(message.toString());
-    });
+    const parsedMessage = JSON.parse(message);
+
+    switch (parsedMessage.type) {
+      case 'new_message':
+        sockets.forEach((s) => {
+          s.send(`${socket.nickname || 'anonymous'}: ${parsedMessage.payload}`);
+        });
+        break;
+
+      case 'nickname':
+        socket.nickname = parsedMessage.payload;
+        break;
+    }
   });
 });
 
