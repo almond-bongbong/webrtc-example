@@ -33,7 +33,7 @@ function initWebsocket() {
 
     setTimeout(() => {
       initWebsocket();
-    }, 2000);
+    }, 2200);
   });
 
   socket.addEventListener('message', (message) => {
