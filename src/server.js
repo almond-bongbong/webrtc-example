@@ -14,7 +14,11 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on('connection', (socket) => {
-  console.log(socket);
+  socket.on('enter_room', (data, done) => {
+    console.log(data);
+    socket.join(data.payload);
+    done('Joined room');
+  });
 });
 
 // const sockets = [];

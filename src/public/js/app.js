@@ -1,3 +1,15 @@
 const socket = io();
 
-console.log(socket);
+const welcome = document.getElementById('welcome');
+const form = welcome.querySelector('form');
+
+function handleRoomSubmit(event) {
+  event.preventDefault();
+  const input = form.querySelector('input');
+  socket.emit('enter_room', { payload: input.value }, (result) => {
+    console.log(result);
+  });
+  input.value = '';
+}
+
+form.addEventListener('submit', handleRoomSubmit);
