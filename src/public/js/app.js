@@ -16,7 +16,7 @@ function addMessage(message) {
 
 function handleMessageSubmit(event) {
   event.preventDefault();
-  const input = room.querySelector('input');
+  const input = event.target.querySelector('input');
   addMessage(`You: ${input.value}`);
   socket.emit('new_message', {
     payload: {
@@ -32,22 +32,33 @@ function showRoom() {
   room.hidden = false;
   const h3 = room.querySelector('h3');
   h3.innerText = `You are in room ${roomName}`;
-  const form = room.querySelector('form');
-  form.addEventListener('submit', handleMessageSubmit);
+  const msgForm = room.querySelector('#msg');
+  msgForm.addEventListener('submit', handleMessageSubmit);
 }
 
 function handleRoomSubmit(event) {
   event.preventDefault();
-  const input = form.querySelector('input');
-  socket.emit('enter_room', { payload: input.value }, showRoom);
-  roomName = input.value;
-  input.value = '';
+  const inputRoom = event.target.querySelector('#room_name');
+  const inputNickname = event.target.querySelector('#nickname');
+
+  socket.emit(
+    'enter_room',
+    {
+      payload: {
+        roomName: inputRoom.value,
+        nickname: inputNickname.value,
+      },
+    },
+    showRoom
+  );
+
+  roomName = inputRoom.value;
 }
 
 form.addEventListener('submit', handleRoomSubmit);
 
-socket.on('welcome', () => {
-  addMessage('Welcome to the chat!');
+socket.on('welcome', ({ payload }) => {
+  addMessage(`${payload.nickname} has joined the room`);
 });
 
 socket.on('bye', () => {
@@ -55,5 +66,16 @@ socket.on('bye', () => {
 });
 
 socket.on('new_message', ({ payload }) => {
-  addMessage(`${payload.roomName}: ${payload.message}`);
+  addMessage(`${payload.nickname}: ${payload.message}`);
+});
+
+socket.on('room_change', ({ payload }) => {
+  const { rooms } = payload;
+  const ul = welcome.querySelector('ul');
+  ul.innerHTML = '';
+  rooms.forEach((room) => {
+    const li = document.createElement('li');
+    li.innerText = room;
+    ul.appendChild(li);
+  });
 });

@@ -13,22 +13,41 @@ app.get('/*', (req, res) => res.redirect('/'));
 const server = http.createServer(app);
 const io = SocketIO(server);
 
+function publicRooms() {
+  const { sids, rooms } = io.sockets.adapter;
+  const publicRooms = [];
+
+  rooms.forEach((_, key) => {
+    if (sids.get(key) == null) {
+      publicRooms.push(key);
+    }
+  });
+
+  return publicRooms;
+}
+
 io.on('connection', (socket) => {
+  socket.nickname = 'Anonymous';
+
   // for log
   socket.onAny((event) => {
     console.log('socket event', event);
   });
 
   socket.on('enter_room', (data, done) => {
-    const roomName = data.payload;
+    const { roomName, nickname } = data.payload;
+    socket.nickname = nickname;
     socket.join(roomName);
     done();
-    io.to(roomName).emit('welcome');
+    socket.to(roomName).emit('welcome', { payload: { nickname } });
+    io.sockets.emit('room_change', { payload: { rooms: publicRooms() } });
   });
 
   socket.on('new_message', ({ payload }, done) => {
     const { message, roomName } = payload;
-    socket.to(roomName).emit('new_message', { payload: { roomName, message } });
+    socket
+      .to(roomName)
+      .emit('new_message', { payload: { nickname: socket.nickname, message } });
     done?.();
   });
 
@@ -37,30 +56,10 @@ io.on('connection', (socket) => {
       socket.to(room).emit('bye');
     });
   });
-});
 
-// const sockets = [];
-//
-// wss.on('connection', (socket) => {
-//   console.log('Connected to Browser ✅');
-//   sockets.push(socket);
-//
-//   socket.on('close', () => console.log('Disconnected from Browser ❌'));
-//   socket.on('message', (message) => {
-//     const parsedMessage = JSON.parse(message);
-//
-//     switch (parsedMessage.type) {
-//       case 'new_message':
-//         sockets.forEach((s) => {
-//           s.send(`${socket.nickname || 'anonymous'}: ${parsedMessage.payload}`);
-//         });
-//         break;
-//
-//       case 'nickname':
-//         socket.nickname = parsedMessage.payload;
-//         break;
-//     }
-//   });
-// });
+  socket.on('disconnect', () => {
+    io.sockets.emit('room_change', { payload: { rooms: publicRooms() } });
+  });
+});
 
 server.listen(3000, () => console.log('🚀 Server started on :3000'));
