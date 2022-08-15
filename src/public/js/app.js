@@ -59,10 +59,16 @@ form.addEventListener('submit', handleRoomSubmit);
 
 socket.on('welcome', ({ payload }) => {
   addMessage(`${payload.nickname} has joined the room`);
+  const h3 = room.querySelector('h3');
+  console.log(payload);
+  h3.innerText = `You are in room ${roomName} (${payload.roomCount})`;
 });
 
-socket.on('bye', () => {
+socket.on('bye', ({ payload }) => {
   addMessage('Bye bye!');
+  console.log(payload);
+  const h3 = room.querySelector('h3');
+  h3.innerText = `You are in room ${roomName} (${payload.roomCount})`;
 });
 
 socket.on('new_message', ({ payload }) => {

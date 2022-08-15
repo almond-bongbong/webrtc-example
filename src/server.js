@@ -1,6 +1,7 @@
 import express from 'express';
 import http from 'http';
-import SocketIO from 'socket.io';
+import { Server } from 'socket.io';
+import { instrument } from '@socket.io/admin-ui';
 
 const app = express();
 
@@ -11,7 +12,16 @@ app.get('/', (req, res) => res.render('home'));
 app.get('/*', (req, res) => res.redirect('/'));
 
 const server = http.createServer(app);
-const io = SocketIO(server);
+const io = new Server(server, {
+  cors: {
+    origin: ['https://admin.socket.io'],
+    credentials: true,
+  },
+});
+
+instrument(io, {
+  auth: false,
+});
 
 function publicRooms() {
   const { sids, rooms } = io.sockets.adapter;
@@ -26,8 +36,13 @@ function publicRooms() {
   return publicRooms;
 }
 
+function countRoom(roomName) {
+  return io.sockets.adapter.rooms.get(roomName)?.size ?? 0;
+}
+
 io.on('connection', (socket) => {
   socket.nickname = 'Anonymous';
+  io.sockets.emit('room_change', { payload: { rooms: publicRooms() } });
 
   // for log
   socket.onAny((event) => {
@@ -38,9 +53,13 @@ io.on('connection', (socket) => {
     const { roomName, nickname } = data.payload;
     socket.nickname = nickname;
     socket.join(roomName);
-    done();
-    socket.to(roomName).emit('welcome', { payload: { nickname } });
-    io.sockets.emit('room_change', { payload: { rooms: publicRooms() } });
+    done?.();
+    socket.to(roomName).emit('welcome', {
+      payload: { nickname, roomCount: countRoom(roomName) },
+    });
+    io.sockets.emit('room_change', {
+      payload: { rooms: publicRooms() },
+    });
   });
 
   socket.on('new_message', ({ payload }, done) => {
@@ -53,7 +72,9 @@ io.on('connection', (socket) => {
 
   socket.on('disconnecting', () => {
     socket.rooms.forEach((room) => {
-      socket.to(room).emit('bye');
+      socket.to(room).emit('bye', {
+        payload: { nickname: socket.nickname, roomCount: countRoom(room) - 1 },
+      });
     });
   });
 
