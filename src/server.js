@@ -25,6 +25,18 @@ io.on('connection', (socket) => {
     done();
     io.to(roomName).emit('welcome');
   });
+
+  socket.on('new_message', ({ payload }, done) => {
+    const { message, roomName } = payload;
+    socket.to(roomName).emit('new_message', { payload: { roomName, message } });
+    done?.();
+  });
+
+  socket.on('disconnecting', () => {
+    socket.rooms.forEach((room) => {
+      socket.to(room).emit('bye');
+    });
+  });
 });
 
 // const sockets = [];
