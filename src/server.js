@@ -14,10 +14,16 @@ const server = http.createServer(app);
 const io = SocketIO(server);
 
 io.on('connection', (socket) => {
+  // for log
+  socket.onAny((event) => {
+    console.log('socket event', event);
+  });
+
   socket.on('enter_room', (data, done) => {
-    console.log(data);
-    socket.join(data.payload);
-    done('Joined room');
+    const roomName = data.payload;
+    socket.join(roomName);
+    done();
+    io.to(roomName).emit('welcome');
   });
 });
 
