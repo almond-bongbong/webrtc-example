@@ -116,3 +116,7 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+ca.crt
+ca.key
+cert.crt
+cert.key

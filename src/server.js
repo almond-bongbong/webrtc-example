@@ -3,6 +3,15 @@ import http from 'http';
 import { Server } from 'socket.io';
 import { instrument } from '@socket.io/admin-ui';
 
+// fs and https 모듈 가져오기
+import * as fs from 'fs';
+import * as https from 'https';
+
+const options = {
+  key: fs.readFileSync('cert.key'),
+  cert: fs.readFileSync('cert.crt'),
+};
+
 const app = express();
 
 app.set('view engine', 'pug');
@@ -84,3 +93,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(3000, () => console.log('🚀 Server started on :3000'));
+
+const httpsServer = https.createServer(options, app);
+const io2 = new Server(httpsServer);
+httpsServer.listen(3333, () => console.log('🚀 Server started on :3333'));
